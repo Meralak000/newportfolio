@@ -44,6 +44,22 @@
             background-color: var(--bg-color);
             color: var(--text-color);
             transition: background-color 0.3s ease, color 0.3s ease;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 2%),
+                radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 2%);
+            background-size: 200% 200%;
+            background-position: 0% 0%;
+            animation: backgroundShift 40s ease-in-out infinite alternate;
+            overflow-x: hidden;
+        }
+        
+        @keyframes backgroundShift {
+            0% {
+                background-position: 0% 0%;
+            }
+            100% {
+                background-position: 100% 100%;
+            }
         }
         .purple-accent {
             color: #8B5CF6;
@@ -254,8 +270,60 @@
         
         .close-modal:hover,
         .close-modal:focus {
-            color: #8B5CF6;
+            color: #bbb;
             text-decoration: none;
+            cursor: pointer;
+        }
+        
+        @keyframes backgroundShift {
+            0% {
+                background-position: 0% 0%;
+            }
+            100% {
+                background-position: 100% 100%;
+            }
+        }
+        
+        /* Geometric background elements */
+        .geo-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        
+        .geo-shape {
+            position: absolute;
+            opacity: 0.05;
+            background: #8B5CF6;
+            border: 1px solid rgba(139, 92, 246, 0.2);
+        }
+        
+        .geo-triangle {
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+        }
+        
+        .geo-circle {
+            border-radius: 50%;
+        }
+        
+        .geo-hexagon {
+            clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+        }
+        
+        /* Constellation background */
+        .constellation-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
         }
         
         .back-button {
@@ -279,6 +347,8 @@
     </style>
 </head>
 <body class="antialiased">
+    <!-- Constellation background -->
+    <canvas id="constellationCanvas" class="constellation-bg"></canvas>
 
     <header id="header" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
         <div class="container mx-auto px-6 py-4">
@@ -804,6 +874,85 @@
     <script>
         // Check if EmailJS is properly loaded
         document.addEventListener('DOMContentLoaded', () => {
+            // Create constellation background
+            const canvas = document.getElementById('constellationCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Set canvas size
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            // Handle window resize
+            window.addEventListener('resize', () => {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                initConstellation();
+            });
+            
+            // Star data
+            let stars = [];
+            const starCount = 150;
+            
+            // Initialize constellation
+            function initConstellation() {
+                stars = [];
+                for (let i = 0; i < starCount; i++) {
+                    stars.push({
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * canvas.height,
+                        size: Math.random() * 1.5 + 0.5,
+                        speed: Math.random() * 0.05 + 0.01,
+                        opacity: Math.random() * 0.5 + 0.1,
+                        pulseDirection: Math.random() > 0.5 ? 1 : -1
+                    });
+                }
+            }
+            
+            // Draw constellation
+            function drawConstellation() {
+                // Clear canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw stars
+                stars.forEach(star => {
+                    // Update star properties
+                    star.opacity += star.pulseDirection * 0.01;
+                    if (star.opacity <= 0.1 || star.opacity >= 0.6) {
+                        star.pulseDirection *= -1;
+                    }
+                    
+                    // Draw star
+                    ctx.beginPath();
+                    ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(139, 92, 246, ${star.opacity})`;
+                    ctx.fill();
+                });
+                
+                // Draw connections between nearby stars
+                for (let i = 0; i < stars.length; i++) {
+                    for (let j = i + 1; j < stars.length; j++) {
+                        const dx = stars[i].x - stars[j].x;
+                        const dy = stars[i].y - stars[j].y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance < 100) {
+                            const opacity = 0.2 * (1 - distance / 100);
+                            ctx.beginPath();
+                            ctx.moveTo(stars[i].x, stars[i].y);
+                            ctx.lineTo(stars[j].x, stars[j].y);
+                            ctx.strokeStyle = `rgba(139, 92, 246, ${opacity})`;
+                            ctx.lineWidth = 0.5;
+                            ctx.stroke();
+                        }
+                    }
+                }
+                
+                requestAnimationFrame(drawConstellation);
+            }
+            
+            // Start constellation
+            initConstellation();
+            drawConstellation();
             if (typeof emailjs === 'undefined') {
                 console.error('EmailJS not loaded properly');
             } else {
